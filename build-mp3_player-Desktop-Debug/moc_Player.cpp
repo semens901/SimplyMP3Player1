@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Player_t {
-    QByteArrayData data[12];
-    char stringdata0[179];
+    QByteArrayData data[15];
+    char stringdata0[230];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -37,20 +37,25 @@ QT_MOC_LITERAL(1, 7, 14), // "startStopMusic"
 QT_MOC_LITERAL(2, 22, 0), // ""
 QT_MOC_LITERAL(3, 23, 13), // "stepLeftMusic"
 QT_MOC_LITERAL(4, 37, 14), // "stepRightMusic"
-QT_MOC_LITERAL(5, 52, 24), // "sliderMovedMusicPosition"
-QT_MOC_LITERAL(6, 77, 25), // "sliderMovedVolumePosition"
-QT_MOC_LITERAL(7, 103, 13), // "volumeChanged"
-QT_MOC_LITERAL(8, 117, 15), // "durationChanged"
-QT_MOC_LITERAL(9, 133, 15), // "positionChanged"
-QT_MOC_LITERAL(10, 149, 13), // "triggeredFile"
-QT_MOC_LITERAL(11, 163, 15) // "triggeredFolder"
+QT_MOC_LITERAL(5, 52, 17), // "ToggleRepeatMusic"
+QT_MOC_LITERAL(6, 70, 24), // "sliderMovedMusicPosition"
+QT_MOC_LITERAL(7, 95, 25), // "sliderMovedVolumePosition"
+QT_MOC_LITERAL(8, 121, 13), // "volumeChanged"
+QT_MOC_LITERAL(9, 135, 15), // "durationChanged"
+QT_MOC_LITERAL(10, 151, 15), // "positionChanged"
+QT_MOC_LITERAL(11, 167, 13), // "triggeredFile"
+QT_MOC_LITERAL(12, 181, 15), // "triggeredFolder"
+QT_MOC_LITERAL(13, 197, 15), // "listItemClicked"
+QT_MOC_LITERAL(14, 213, 16) // "QListWidgetItem*"
 
     },
     "Player\0startStopMusic\0\0stepLeftMusic\0"
-    "stepRightMusic\0sliderMovedMusicPosition\0"
+    "stepRightMusic\0ToggleRepeatMusic\0"
+    "sliderMovedMusicPosition\0"
     "sliderMovedVolumePosition\0volumeChanged\0"
     "durationChanged\0positionChanged\0"
-    "triggeredFile\0triggeredFolder"
+    "triggeredFile\0triggeredFolder\0"
+    "listItemClicked\0QListWidgetItem*"
 };
 #undef QT_MOC_LITERAL
 
@@ -60,7 +65,7 @@ static const uint qt_meta_data_Player[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      10,   14, // methods
+      12,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -68,28 +73,32 @@ static const uint qt_meta_data_Player[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   64,    2, 0x0a /* Public */,
-       3,    0,   65,    2, 0x0a /* Public */,
-       4,    0,   66,    2, 0x0a /* Public */,
-       5,    1,   67,    2, 0x0a /* Public */,
-       6,    1,   70,    2, 0x0a /* Public */,
-       7,    1,   73,    2, 0x0a /* Public */,
-       8,    1,   76,    2, 0x0a /* Public */,
-       9,    1,   79,    2, 0x0a /* Public */,
-      10,    1,   82,    2, 0x0a /* Public */,
-      11,    1,   85,    2, 0x0a /* Public */,
+       1,    0,   74,    2, 0x0a /* Public */,
+       3,    0,   75,    2, 0x0a /* Public */,
+       4,    0,   76,    2, 0x0a /* Public */,
+       5,    1,   77,    2, 0x0a /* Public */,
+       6,    1,   80,    2, 0x0a /* Public */,
+       7,    1,   83,    2, 0x0a /* Public */,
+       8,    1,   86,    2, 0x0a /* Public */,
+       9,    1,   89,    2, 0x0a /* Public */,
+      10,    1,   92,    2, 0x0a /* Public */,
+      11,    1,   95,    2, 0x0a /* Public */,
+      12,    0,   98,    2, 0x0a /* Public */,
+      13,    1,   99,    2, 0x0a /* Public */,
 
  // slots: parameters
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void, QMetaType::Bool,    2,
     QMetaType::Void, QMetaType::Int,    2,
     QMetaType::Void, QMetaType::Int,    2,
     QMetaType::Void, QMetaType::Int,    2,
     QMetaType::Void, QMetaType::LongLong,    2,
     QMetaType::Void, QMetaType::LongLong,    2,
     QMetaType::Void, QMetaType::Bool,    2,
-    QMetaType::Void, QMetaType::Bool,    2,
+    QMetaType::Void,
+    QMetaType::Void, 0x80000000 | 14,    2,
 
        0        // eod
 };
@@ -103,13 +112,15 @@ void Player::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 0: _t->startStopMusic(); break;
         case 1: _t->stepLeftMusic(); break;
         case 2: _t->stepRightMusic(); break;
-        case 3: _t->sliderMovedMusicPosition((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 4: _t->sliderMovedVolumePosition((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 5: _t->volumeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 6: _t->durationChanged((*reinterpret_cast< qint64(*)>(_a[1]))); break;
-        case 7: _t->positionChanged((*reinterpret_cast< qint64(*)>(_a[1]))); break;
-        case 8: _t->triggeredFile((*reinterpret_cast< bool(*)>(_a[1]))); break;
-        case 9: _t->triggeredFolder((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 3: _t->ToggleRepeatMusic((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 4: _t->sliderMovedMusicPosition((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 5: _t->sliderMovedVolumePosition((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 6: _t->volumeChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 7: _t->durationChanged((*reinterpret_cast< qint64(*)>(_a[1]))); break;
+        case 8: _t->positionChanged((*reinterpret_cast< qint64(*)>(_a[1]))); break;
+        case 9: _t->triggeredFile((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 10: _t->triggeredFolder(); break;
+        case 11: _t->listItemClicked((*reinterpret_cast< QListWidgetItem*(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -144,13 +155,13 @@ int Player::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 12;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 10)
+        if (_id < 12)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 10;
+        _id -= 12;
     }
     return _id;
 }

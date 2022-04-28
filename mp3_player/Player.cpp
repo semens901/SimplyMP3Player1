@@ -1,7 +1,8 @@
 #include "Player.h"
 
-Player::Player(QWidget *pwgt /*=0*/) : QWidget(pwgt), flag_pause(0), musicPlay("")
+Player::Player(QWidget *pwgt /*=0*/) : QWidget(pwgt), musicPlay("")
 {
+    // Меню
     fileSelectAction = new QAction("Выбрать файл");
     folderSelectAction = new QAction("Выбрать папку");
 
@@ -12,28 +13,44 @@ Player::Player(QWidget *pwgt /*=0*/) : QWidget(pwgt), flag_pause(0), musicPlay("
     connect(fileSelectAction, SIGNAL(triggered(bool)), SLOT(triggeredFile(bool)));
 
     fileMenu->addAction(folderSelectAction);
-    connect(folderSelectAction, SIGNAL(triggered(bool)), SLOT(triggeredFolder(bool)));
+    connect(folderSelectAction, SIGNAL(triggered(bool)), SLOT(triggeredFolder()));
 
     PlaybackMenu = new QMenu("&Воспроизведение");
 
     menuBar->addMenu(fileMenu);
     menuBar->addMenu(PlaybackMenu);
 
+    // Показывает музыку из списка
+    listMusicFiles = new QListWidget();
+    connect(listMusicFiles, SIGNAL(itemClicked(QListWidgetItem*)), SLOT(listItemClicked(QListWidgetItem*)));
+
+    // Кнопка запуска/паузы музыки
     btnStartMusic = createButton("");
     btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
 
     connect(btnStartMusic, SIGNAL(clicked()), SLOT(startStopMusic()));
 
+    // Кнопка переключения влево
     btnStepLeft = createButton("");
     btnStepLeft->setIcon(QPixmap("Buttons/btnStepLeft.png"));
     connect(btnStepLeft, SIGNAL(clicked()), SLOT(stepLeftMusic()));
 
+    // Кнопка переключения вправо
     btnStepRight = createButton("");
     btnStepRight->setIcon(QPixmap("Buttons/btnStepRight.png"));
     connect(btnStepRight, SIGNAL(clicked()), SLOT(stepRightMusic()));
 
+    // Кнопка отвечающая за повторение трека
+    btnToggleRepeatMusic = createButton("");
+    btnToggleRepeatMusic->setCheckable(true);
+    btnToggleRepeatMusic->setChecked(false);
+    btnToggleRepeatMusic->setIcon(QPixmap("Buttons/repeat_OFF.png"));
+    connect(btnToggleRepeatMusic, SIGNAL(toggled(bool)), SLOT(ToggleRepeatMusic(bool)));
+
+    // Показывает сколько будет длится музыка
     musicTime = new QLabel("0 : 0");
 
+    // Показывает имя проигрываемого файла
     lblNameFile = new QLabel("");
 
     // Ползунок отвечающий за регулировку позиции музыки
@@ -54,47 +71,115 @@ Player::Player(QWidget *pwgt /*=0*/) : QWidget(pwgt), flag_pause(0), musicPlay("
     menuVBoxLayout->addWidget(menuBar);
 
     frameGridLayout = new QGridLayout;
-    frameGridLayout->addWidget(lblNameFile, 0, 1);
-    frameGridLayout->addWidget(btnStepLeft, 1, 0);
-    frameGridLayout->addWidget(btnStartMusic, 1, 1);
-    frameGridLayout->addWidget(btnStepRight, 1, 2);
-    frameGridLayout->addWidget(slMusicPosition, 1, 3);
-    frameGridLayout->addWidget(musicTime, 1, 4);
-    frameGridLayout->addWidget(volumePosition, 1, 5);
+    frameGridLayout->addWidget(btnToggleRepeatMusic, 0, 0);
+    frameGridLayout->addWidget(lblNameFile, 1, 1);
+    frameGridLayout->addWidget(btnStepLeft, 2, 0);
+    frameGridLayout->addWidget(btnStartMusic, 2, 1);
+    frameGridLayout->addWidget(btnStepRight, 2, 2);
+    frameGridLayout->addWidget(slMusicPosition, 2, 3);
+    frameGridLayout->addWidget(musicTime, 2, 4);
+    frameGridLayout->addWidget(volumePosition, 2, 5);
 
     frameVBoxLayout = new QVBoxLayout;
     frameVBoxLayout->addLayout(menuVBoxLayout);
+    frameVBoxLayout->addWidget(listMusicFiles);
     frameVBoxLayout->addLayout(frameGridLayout);
 
     setLayout(frameVBoxLayout);
 }
 
+bool Player::flagPause = 0;
+bool Player::flagRepeat = 0;
+bool Player::flagRandom = 0;
+
+void Player::ToggleRepeatMusic(bool flag)
+{
+    if(flag)
+    {
+        flagRepeat=0;
+    }
+    else
+    {
+        flagRepeat = 1;
+    }
+}
+
+void Player::listItemClicked(QListWidgetItem* item)
+{
+    // Обрабатывает какой элемент выбран на listMusicFiles
+    selectedItem = item;
+    lblNameFile->setText(selectedItem->text());
+    if(musicPlay != lblNameFile->text())
+    {
+        btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
+    }
+    else
+    {
+        btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
+    }
+    music_name_it = files.begin();
+
+    // Временное решение
+    while(*music_name_it != lblNameFile->text())
+    {
+        ++music_name_it;
+    }
+
+
+}
 
 void Player::sliderMovedMusicPosition(int pos)
 {
+    // Меняет позицию ползунка проигрывания музыки
     slMusicPosition->setSliderPosition(pos);
     player->setPosition(pos);
 }
 
 void Player::sliderMovedVolumePosition(int pos)
 {
-    player->setVolume(pos);
+    // Изменяет громкость музыки
+    if(player!=nullptr)
+        player->setVolume(pos);
 }
 
 void Player::volumeChanged(int pos)
 {
+    // Обрабатывает изменения на самом ползунке регулирования громкости
     volumePosition->setSliderPosition(pos);
 }
 
 void Player::positionChanged(qint64 pos)
 {
+    // Музыка отправляя сигнал сама меняет позицию ползунка при проигрывании и при этом
+    // Мы еще и автоматически переключаем трек при окончании музыки
     slMusicPosition->setValue(pos);
     //musicTime->setText(QString::number((musicLength - pos)/1000));
     musicTime->setText(QString::number(((musicLength - pos)/1000)/60) + " : " + QString::number(((musicLength - pos)/1000)%60));
+    if(musicLength != 0)
+    {
+        if(((((musicLength - pos)/1000)/60) == 0) && ((((musicLength - pos)/1000)%60) == 0))
+        {
+            if(!files.isEmpty())
+            {
+                if(((music_name_it + 1) != files.end()) && flagRepeat)
+                {
+                    stepRightMusic();
+                    startStopMusic();
+                }
+                else if(!flagRepeat)
+                {
+                    player->setPosition(0);
+                    player->play();
+                }
+            }
+        }
+    }
+
 }
 
 void Player::durationChanged(qint64 duration)
 {
+    // Устанавливаем радиус ползунка
     slMusicPosition->setRange(0, duration);
     musicLength = duration;
 }
@@ -102,7 +187,7 @@ void Player::durationChanged(qint64 duration)
 void Player::stepLeftMusic()
 {
     // Переключает музыку влево
-    if(music_name_it != nullptr)
+    if(!music_name_it->isEmpty())
     {
         if(!music_name_it->isEmpty())
         {
@@ -110,6 +195,15 @@ void Player::stepLeftMusic()
             {
                 --music_name_it;
                 lblNameFile->setText(*music_name_it);
+
+                if(musicPlay != lblNameFile->text())
+                {
+                    btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
+                }
+                else
+                {
+                    btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
+                }
             }
 
         }
@@ -119,16 +213,22 @@ void Player::stepLeftMusic()
 void Player::stepRightMusic()
 {
     // Переключает музыку вправо
-    if(music_name_it != nullptr)
+    if(!music_name_it->isEmpty())
     {
         if(!music_name_it->isEmpty())
         {
             if((music_name_it + 1) != files.end())
             {
                 ++music_name_it;
-                if(lblNameFile!= nullptr)
+                lblNameFile->setText(*music_name_it);
+
+                if(musicPlay != lblNameFile->text())
                 {
-                    lblNameFile->setText(*music_name_it);
+                    btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
+                }
+                else
+                {
+                    btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
                 }
             }
 
@@ -145,66 +245,70 @@ void Player::startStopMusic()
      */
     if(lblNameFile->text() != "")
     {
-        if(music_name_it != nullptr)
+        if(!files.isEmpty())
         {
-            if(((*music_name_it) == musicPlay) || musicPlay == "")
-            {
-                if(player == nullptr) // Срабатывает при выборе папки
+            // Срабатывает если мы выбираем папку
+                if(((lblNameFile->text() == musicPlay) || (musicPlay == "")))
                 {
-
-                    player = new QMediaPlayer;
-                    connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64))); // позиция трека на дорожке
-                    connect(player, SIGNAL(durationChanged(qint64)), this, SLOT(durationChanged(qint64))); // длина трека
-                    connect(player, SIGNAL(volumeChanged(int)), this, SLOT(volumeChanged(int)));
-                    player->setMedia(QUrl::fromLocalFile(dirName + "/" + lblNameFile->text()));
-                    player->play();
-                    musicPlay = lblNameFile->text();
-                    btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
-                }
-                else
-                {
-                    if(!flag_pause)
-                    {
-                        player->pause();
-                        flag_pause = 1;
-                        btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
-                    }
-                    else
-                    {
-                        player->play();
-                        flag_pause = 0;
-                        btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
-                    }
-                }
-            }
-            else
-            {
-                if(player != nullptr)
-                {
-                    disconnect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64)));
-                    disconnect(player, SIGNAL(durationChanged(qint64)), this, SLOT(durationChanged(qint64)));
-                    disconnect(player, SIGNAL(volumeChanged(int)), this, SLOT(volumeChanged(int)));
-                    player->~QMediaPlayer();
-                    player = nullptr;
-
                     if(player == nullptr)
                     {
 
                         player = new QMediaPlayer;
-                        connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64)));
-                        connect(player, SIGNAL(durationChanged(qint64)), this, SLOT(durationChanged(qint64)));
+                        connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64))); // позиция трека на дорожке
+                        connect(player, SIGNAL(durationChanged(qint64)), this, SLOT(durationChanged(qint64))); // длина трека
                         connect(player, SIGNAL(volumeChanged(int)), this, SLOT(volumeChanged(int)));
                         player->setMedia(QUrl::fromLocalFile(dirName + "/" + lblNameFile->text()));
                         player->play();
                         musicPlay = lblNameFile->text();
                         btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
                     }
+                    else
+                    {
+                        if(!flagPause)
+                        {
+                            player->pause();
+                            flagPause = 1;
+                            btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
+                        }
+                        else
+                        {
+                            player->play();
+                            flagPause = 0;
+                            btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
+                        }
+                    }
                 }
+                else
+                {
+                    if(player != nullptr)
+                    {
+                        disconnect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64)));
+                        disconnect(player, SIGNAL(durationChanged(qint64)), this, SLOT(durationChanged(qint64)));
+                        disconnect(player, SIGNAL(volumeChanged(int)), this, SLOT(volumeChanged(int)));
+                        player->~QMediaPlayer();
+                        player = nullptr;
 
+                        if(player == nullptr)
+                        {
+
+                            player = new QMediaPlayer;
+                            connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64)));
+                            connect(player, SIGNAL(durationChanged(qint64)), this, SLOT(durationChanged(qint64)));
+                            connect(player, SIGNAL(volumeChanged(int)), this, SLOT(volumeChanged(int)));
+                            player->setMedia(QUrl::fromLocalFile(dirName + "/" + lblNameFile->text()));
+                            player->play();
+                            musicPlay = lblNameFile->text();
+                            btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
+                        }
+                    }
+
+                }
             }
+
         }
         else
         {
+            // Срабатывает если мы выбираем файл
             if(musicPlay == "")
             {
                 if(player == nullptr) // Срабатывает при первом запуске программы
@@ -222,16 +326,16 @@ void Player::startStopMusic()
             }
             else if(player != nullptr && (lblNameFile->text() == musicPlay))
             {
-                if(!flag_pause)
+                if(!flagPause)
                 {
                     player->pause();
-                    flag_pause = 1;
+                    flagPause = 1;
                     btnStartMusic->setIcon(QPixmap("Buttons/btnPlay.png"));
                 }
                 else
                 {
                     player->play();
-                    flag_pause = 0;
+                    flagPause = 0;
                     btnStartMusic->setIcon(QPixmap("Buttons/btnStop.png"));
                 }
             }
@@ -257,13 +361,10 @@ void Player::startStopMusic()
                         musicPlay = lblNameFile->text();
                     }
                 }
+
             }
 
         }
-    }
-
-
-
 }
 
 QPushButton *Player::createButton(const QString &str)
@@ -274,13 +375,13 @@ QPushButton *Player::createButton(const QString &str)
     return btn;
 }
 
-QVector<QString> Player::SearchFiles(QString &folder)
+QList<QString> Player::SearchFiles(QString &folder)
 {
     // Функция написанная на C и модифицированная мной, она записыват названия файлов в каталоге и возвращает
     // Vector<QString> в котором записаны названия всех файлов
     DIR *d;
     struct dirent *dir;
-    QVector<QString> result;
+    QList<QString> result;
     d = opendir(folder.toStdString().c_str());
     if(d)
     {
@@ -296,9 +397,21 @@ QVector<QString> Player::SearchFiles(QString &folder)
     return result;
 }
 
+void Player::UpdateListMusicFiles(QString &dir)
+{
+    // Обновляет listMusicFiles
+    listMusicFiles->clear();
+    QList<QString> musicFiles = SearchFiles(dir);
+
+    for(QString musicItem : musicFiles)
+    {
+        listMusicFiles->addItem(musicItem);
+    }
+}
 
 void Player::triggeredFile(bool flag)
 {
+    //Получает путь до файла с музыкой от пользователя
     if(!flag) flag = 1;
     else flag = 0;
 
@@ -318,15 +431,18 @@ void Player::triggeredFile(bool flag)
     }
 }
 
-void Player::triggeredFolder(bool flag)
+void Player::triggeredFolder()
 {
-    if(!flag) flag = 1;
+   // Получает путь до папки с музыкой от пользователя
+
+   //if(!flag) flag = 1;
 
     dirName = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
                                                 "/home/simon901/projects_for_Cpp/"
                                                 "Simply MP3 Player/",
                                                 QFileDialog::ShowDirsOnly |
                                                 QFileDialog::DontResolveSymlinks);
+    UpdateListMusicFiles(dirName);
     files = SearchFiles(dirName);
     if(!files.isEmpty())
     {

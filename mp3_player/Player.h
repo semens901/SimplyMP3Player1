@@ -11,6 +11,7 @@
 #include<QFileDialog>
 #include<QMenu>
 #include<QMenuBar>
+#include <QListWidget>
 
 class Player : public QWidget
 {
@@ -24,9 +25,10 @@ private:
     QPushButton *btnStartMusic;
     QPushButton *btnStepLeft;
     QPushButton *btnStepRight;
+    QPushButton *btnToggleRepeatMusic;
 
-    QVector<QString> files; // Хранит список файлов
-    QVector<QString>::iterator  music_name_it = nullptr; // Итератор для files
+    QList<QString> files; // Хранит список файлов
+    QList<QString>::iterator  music_name_it; // Итератор для files
 
     QLabel *lblNameFile = nullptr; // Лейбл который выводит название песни
     QLabel *musicTime; // На этом лейбле будет отображаться, сколько длится музыка
@@ -47,27 +49,36 @@ private:
     QAction *fileSelectAction;
     QAction *folderSelectAction;
 
+    QListWidget *listMusicFiles;
+    QListWidgetItem* selectedItem = nullptr;
+
+
     long long musicLength;
 
     // ФЛАГИ
-    bool flag_pause; // Флаг который отображает, играет сейчас музыка или нет
+    static bool flagPause; // Флаг который отображает, играет сейчас музыка или нет
+    static bool flagRepeat; // Флаг отвечающий за повторение трека
+    static bool flagRandom; // Флаг отвечающий за рандомное переключение трека
 
 public:
     Player(QWidget *pwgt =0);
-    QPushButton *createButton(const QString &str);
-    QVector<QString> SearchFiles(QString &folder);
+    QPushButton *createButton(const QString&);
+    QList<QString> SearchFiles(QString&);
+    void UpdateListMusicFiles(QString&);
 
 public slots:
     void startStopMusic();
     void stepLeftMusic();
     void stepRightMusic();
+    void ToggleRepeatMusic(bool);
     void sliderMovedMusicPosition(int);
     void sliderMovedVolumePosition(int);
     void volumeChanged(int);
     void durationChanged(qint64);
     void positionChanged(qint64);
     void triggeredFile(bool);
-    void triggeredFolder(bool);
+    void triggeredFolder();
+    void listItemClicked(QListWidgetItem*);
 
 
 };
