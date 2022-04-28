@@ -94,7 +94,8 @@ bool Player::flagRandom = 0;
 
 void Player::ToggleRepeatMusic(bool flag)
 {
-    if(flag)
+    // Отвечает за триггер повтора музыки
+    if(!flag)
     {
         flagRepeat=0;
     }
@@ -131,8 +132,11 @@ void Player::listItemClicked(QListWidgetItem* item)
 void Player::sliderMovedMusicPosition(int pos)
 {
     // Меняет позицию ползунка проигрывания музыки
-    slMusicPosition->setSliderPosition(pos);
-    player->setPosition(pos);
+    if(player != nullptr)
+    {
+        slMusicPosition->setSliderPosition(pos);
+        player->setPosition(pos);
+    }
 }
 
 void Player::sliderMovedVolumePosition(int pos)
@@ -161,12 +165,20 @@ void Player::positionChanged(qint64 pos)
         {
             if(!files.isEmpty())
             {
-                if(((music_name_it + 1) != files.end()) && flagRepeat)
+                if(((music_name_it + 1) != files.end()) && !flagRepeat)
                 {
                     stepRightMusic();
                     startStopMusic();
                 }
-                else if(!flagRepeat)
+                else if(flagRepeat)
+                {
+                    player->setPosition(0);
+                    player->play();
+                }
+            }
+            else
+            {
+                if(flagRepeat)
                 {
                     player->setPosition(0);
                     player->play();
@@ -305,7 +317,6 @@ void Player::startStopMusic()
                 }
             }
 
-        }
         else
         {
             // Срабатывает если мы выбираем файл
@@ -365,6 +376,7 @@ void Player::startStopMusic()
             }
 
         }
+    }
 }
 
 QPushButton *Player::createButton(const QString &str)
